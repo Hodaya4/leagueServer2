@@ -8,7 +8,6 @@ public class User {
     private String username;
     private String password;
     private String secret;
-    private College college;
 
     public User(int id, String username, String password) {
         this(username, password);
@@ -65,11 +64,4 @@ public class User {
         this.secret = secret;
     }
 
-    public College getCollege() {
-        return college;
-    }
-
-    public void setCollege(College college) {
-        this.college = college;
-    }
 }

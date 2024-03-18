@@ -31,8 +31,6 @@
         <property name="username" type="string" column="username"/>
         <property name="password" type="string" column="password"/>
         <property name="secret" type="string" column="secret"/>
-        <many-to-one name="college" column="college_id"
-                     class="com.ashcollege.entities.College"/>
     </class>
 
     <class name="com.ashcollege.entities.Note" table="notes" lazy="false">
@@ -43,13 +41,6 @@
         <property name="date" type="java.util.Date" column="date"/>
         <many-to-one name="owner" column="owner_id"
                      class="com.ashcollege.entities.User"/>
-    </class>
-
-    <class name="com.ashcollege.entities.College" table="colleges" lazy="false">
-        <id name="id" type="int" column="id">
-            <generator class="native"/>
-        </id>
-        <property name="name" type="string" column="name"/>
     </class>
 
     <!--    example2-->

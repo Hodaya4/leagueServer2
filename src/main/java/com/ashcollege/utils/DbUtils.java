@@ -32,13 +32,13 @@ public class DbUtils {
     }
 
     public boolean checkIfUsernameAvailable (String username) {
-        boolean available = false;
+        boolean available = true;
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT username FROM users WHERE username = ?");
             preparedStatement.setString(1,username);
             ResultSet resultSet = preparedStatement.executeQuery();
-            while (!resultSet.next()) {
-                 available = true;
+            if (resultSet.next()) {
+                available = false;
             }
         }catch (SQLException e){
             e.printStackTrace();

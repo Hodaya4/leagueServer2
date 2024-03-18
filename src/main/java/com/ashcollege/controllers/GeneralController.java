@@ -103,43 +103,4 @@ public class GeneralController {
         return basicResponse;
     }
 
-    @RequestMapping(value = "test")
-    public Client test(String firstName) {
-        Client client = persist.getClientByFirstName(firstName);
-        return client;
-    }
-
-    @RequestMapping(value = "get-notes")
-    public BasicResponse getNotes(String secret) {
-        BasicResponse basicResponse = null;
-        Integer errorCode = null;
-        if (secret != null) {
-                List<Note> notes = persist.getNotes(secret);
-                basicResponse = new NotesResponse(true, null, notes);
-        } else {
-            errorCode = ERROR_SECRET_WAS_NOT_SENT;
-        }
-        if (errorCode != null) {
-            basicResponse = new BasicResponse(false,errorCode);
-        }
-        return basicResponse;
-    }
-
-
-    @RequestMapping(value = "get-notes-by-college")
-    public BasicResponse getNotesByCollegeName(String collegeName) {
-        BasicResponse basicResponse = null;
-        Integer errorCode = null;
-        if (collegeName != null) {
-            List<Note> notes = persist.getNotesByCollegeName(collegeName);
-            basicResponse = new NotesResponse(true, null, notes);
-        } else {
-            errorCode = ERROR_SECRET_WAS_NOT_SENT;
-        }
-        if (errorCode != null) {
-            basicResponse = new BasicResponse(false,errorCode);
-        }
-        return basicResponse;
-    }
-
 }
