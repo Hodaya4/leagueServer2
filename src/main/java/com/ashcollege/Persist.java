@@ -1,8 +1,6 @@
 package com.ashcollege;
 
 
-import com.ashcollege.entities.Client;
-import com.ashcollege.entities.Note;
 import com.ashcollege.entities.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
