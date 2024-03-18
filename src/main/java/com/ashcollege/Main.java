@@ -1,5 +1,6 @@
 package com.ashcollege;
 
+import com.ashcollege.entities.Team;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -21,7 +22,8 @@ public class Main {
         LOGGER.info("Application started.");
         applicationStarted = true;
         startTime = System.currentTimeMillis();
-
+        Team team = new Team();
+        System.out.println(team.getName() + " " + team.getSkills());
     }
 
 }
