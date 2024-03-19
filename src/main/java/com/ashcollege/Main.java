@@ -24,6 +24,7 @@ public class Main {
         startTime = System.currentTimeMillis();
         Team team = new Team();
         System.out.println(team.getName() + " " + team.getSkills());
+
     }
 
 }

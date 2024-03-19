@@ -23,8 +23,7 @@ public class Team {
     // Generate random name
     private String generateRandomName() {
         Faker faker = new Faker();
-        String name = faker.address().cityName();
-        return name;
+        return faker.address().cityName();
     }
 
     private float generateRandomSkills() {

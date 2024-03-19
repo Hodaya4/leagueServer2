@@ -1,6 +1,7 @@
 package com.ashcollege.controllers;
 
 import com.ashcollege.Persist;
+import com.ashcollege.entities.Team;
 import com.ashcollege.entities.User;
 import com.ashcollege.responses.BasicResponse;
 import com.ashcollege.responses.LoginResponse;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.ashcollege.utils.Errors.*;
@@ -29,6 +31,21 @@ public class GeneralController {
         return "Hello From Server";
     }
 
+    @RequestMapping(value = "/generateTeams", method = {RequestMethod.GET, RequestMethod.POST})
+    public List<Team> generateTeams() {
+//        List<Team> teams = new ArrayList<>();
+//        for (int i = 0; i < 10; i++) {
+//            Team team = new Team
+//            teams.add(team);
+//        }
+        List<Team> teams = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Team team = new Team();
+            teams.add(team);
+            System.out.println(i);
+        }
+        return teams;
+    }
 
     @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.POST})
     public BasicResponse login(String username, String password) {
