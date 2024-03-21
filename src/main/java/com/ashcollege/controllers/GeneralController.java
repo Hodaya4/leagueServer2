@@ -33,19 +33,14 @@ public class GeneralController {
 
     @RequestMapping(value = "/generateTeams", method = {RequestMethod.GET, RequestMethod.POST})
     public List<Team> generateTeams() {
-//        List<Team> teams = new ArrayList<>();
-//        for (int i = 0; i < 10; i++) {
-//            Team team = new Team
-//            teams.add(team);
-//        }
         List<Team> teams = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Team team = new Team();
             teams.add(team);
-            System.out.println(i);
         }
         return teams;
     }
+
 
     @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.POST})
     public BasicResponse login(String username, String password) {
@@ -72,11 +67,34 @@ public class GeneralController {
         return basicResponse;
     }
 
+    @RequestMapping(value = "/get-user-balance", method = {RequestMethod.GET, RequestMethod.POST})
+    public float getUserBalance(String username) {
+        System.out.println(username);
+        return persist.getUserBalance(username);
+    }
+
+    @RequestMapping(value = "/update-user-balance", method = RequestMethod.POST)
+    public BasicResponse updateUserBalance(String username, String password, float balance) {
+        persist.updateUserBalance(username, password, balance);
+        System.out.println("update balance " + balance);
+        return new BasicResponse(true, null); // Return success response
+    }
+
+    @RequestMapping(value = "/update-username", method = RequestMethod.POST)
+    public BasicResponse updateUsername(String username, String password, String newUsername) {
+        System.out.println("username " + username);
+        System.out.println("password " + password);
+        System.out.println("updated username " + newUsername);
+        persist.updateUsername(username, password, newUsername);
+        return new BasicResponse(true, null); // Return success response
+    }
+
     @RequestMapping(value = "add-user")
     public boolean addUser(String username, String password, String email) {
-        User userToAdd = new User(username, password, email);
+        User userToAdd = new User(username, password, email, 1000);
         return dbUtils.addUser(userToAdd);
     }
+
 
     @RequestMapping(value = "get-users")
     public List<User> getUsers() {

@@ -22,9 +22,6 @@ public class Main {
         LOGGER.info("Application started.");
         applicationStarted = true;
         startTime = System.currentTimeMillis();
-        Team team = new Team();
-        System.out.println(team.getName() + " " + team.getSkills());
-
     }
 
 }

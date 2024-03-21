@@ -49,10 +49,11 @@ public class DbUtils {
         boolean success = false;
         try {
             if (checkIfUsernameAvailable(user.getUsername())) {
-                PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO users (username, password, email) VALUES ( ? , ? , ? )");
+                PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO users (username, password, email, balance) VALUES ( ? , ? , ? , ?)");
                 preparedStatement.setString(1, user.getUsername());
                 preparedStatement.setString(2, user.getPassword());
                 preparedStatement.setString(3, user.getEmail());
+                preparedStatement.setFloat(4,user.getBalance());
                 preparedStatement.executeUpdate();
                 success = true;
             }
@@ -72,7 +73,8 @@ public class DbUtils {
                 String username = resultSet.getString("username");
                 String password = resultSet.getString("password");
                 String email = resultSet.getString("email");
-                User user = new User(id, username,password, email);
+                float balance = resultSet.getFloat("balance");
+                User user = new User(id, username,password, email, balance);
                 allUsers.add(user);
             }
 
@@ -134,6 +136,49 @@ public class DbUtils {
             System.out.println(e);
         }
         return user;
+    }
+
+    public float getUserBalance(String username, String password) {
+        float balance = 0;
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT balance FROM users WHERE username = ? AND password = ?");
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                balance = resultSet.getFloat("balance");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return balance;
+    }
+
+    public void updateUserBalance(String username, String password, float balance) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "UPDATE users SET balance = ? WHERE username = ? AND password = ?");
+            preparedStatement.setFloat(1, balance);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateUsername(String username, String password, String newUsername) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "UPDATE users SET username = ? WHERE username = ? AND password = ?");
+            preparedStatement.setString(1, newUsername);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
