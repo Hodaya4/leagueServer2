@@ -138,13 +138,12 @@ public class DbUtils {
         return user;
     }
 
-    public float getUserBalance(String username, String password) {
+    public float getUserBalance(String username) {
         float balance = 0;
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT balance FROM users WHERE username = ? AND password = ?");
+                    "SELECT balance FROM users WHERE username = ?");
             preparedStatement.setString(1, username);
-            preparedStatement.setString(2, password);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 balance = resultSet.getFloat("balance");

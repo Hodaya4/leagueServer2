@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication(exclude = HibernateJpaAutoConfiguration.class)
 @EnableScheduling
 public class Main {
-    public static boolean applicationStarted = false;
+    public static boolean applicationStarted =  false;
     private static final Logger LOGGER = LoggerFactory.getLogger(Persist.class);
 
     public static long startTime;

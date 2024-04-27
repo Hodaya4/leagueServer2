@@ -1,0 +1,487 @@
+package com.ashcollege;
+
+
+import com.ashcollege.entities.User;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+@Transactional
+@Component
+@SuppressWarnings("unchecked")
+public class Persist {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Persist.class);
+    @PersistenceContext
+    private EntityManager entityManager;
+
+
+    private final SessionFactory sessionFactory;
+
+    private Connection connection;
+    @Autowired
+    private DataSource dataSource;
+
+
+
+    @Autowired
+    public Persist(SessionFactory sf) {
+        this.sessionFactory = sf;
+    }
+
+    public Session getQuerySession() {
+        return sessionFactory.getCurrentSession();
+    }
+
+    public void save(Object object) {
+        this.sessionFactory.getCurrentSession().saveOrUpdate(object);
+    }
+
+    public <T> T loadObject(Class<T> clazz, int oid) {
+        return this.getQuerySession().get(clazz, oid);
+    }
+
+    public <T> List<T> loadList(Class<T> clazz) {
+        return this.sessionFactory.getCurrentSession().createQuery("FROM User").list();
+    }
+
+    public void updateUserBalance(String username, String password, float balance) {
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "UPDATE users SET balance = ? WHERE username = ? AND password = ?");
+            preparedStatement.setFloat(1, balance);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateUsername(String username, String password, String newUsername) {
+        try (Connection connection = dataSource.getConnection()) {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "UPDATE users SET username = ? WHERE username = ? AND password = ?");
+            preparedStatement.setString(1, newUsername);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public float getUserBalance(String username) {
+        float balance = 3;
+        System.out.println("0");
+        try (Connection connection = dataSource.getConnection()) {
+            System.out.println("1");
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT balance FROM users WHERE username = ?");
+            System.out.println("2");
+            preparedStatement.setString(1, username);
+            System.out.println("3");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            System.out.println("4");
+            if (resultSet.next()) {
+                System.out.println("5");
+                balance = resultSet.getFloat("balance");
+            }else {
+                System.out.println("6");
+            }
+        } catch (SQLException e) {
+            System.out.println("7");
+            e.printStackTrace();
+        }
+        System.out.println("8");
+        return balance;
+    }
+
+
+    public User login(String username, String password) {
+        return (User) this.sessionFactory.getCurrentSession().createQuery(
+                        "FROM User WHERE username = :username AND password = :password")
+                .setParameter("username", username)
+                .setParameter("password", password)
+                .setMaxResults(1)
+                .uniqueResult();
+    }
+
+}
+
+
+
+General:
+
+package com.ashcollege.controllers;
+
+import com.ashcollege.Persist;
+import com.ashcollege.entities.Team;
+import com.ashcollege.entities.User;
+import com.ashcollege.responses.BasicResponse;
+import com.ashcollege.responses.LoginResponse;
+import com.ashcollege.utils.DbUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.ashcollege.utils.Errors.*;
+
+@RestController
+public class GeneralController {
+
+    @Autowired
+    private DbUtils dbUtils;
+
+    @Autowired
+    private Persist persist;
+
+
+    @RequestMapping(value = "/", method = {RequestMethod.GET, RequestMethod.POST})
+    public Object hello() {
+        return "Hello From Server";
+    }
+
+    @RequestMapping(value = "/generateTeams", method = {RequestMethod.GET, RequestMethod.POST})
+    public List<Team> generateTeams() {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Team team = new Team();
+            teams.add(team);
+        }
+        return teams;
+    }
+
+
+    @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.POST})
+    public BasicResponse login(String username, String password) {
+        BasicResponse basicResponse = null;
+        boolean success = false;
+        Integer errorCode = null;
+        if (username != null && username.length() > 0) {
+            if (password != null && password.length() > 0) {
+                User user = persist.login(username,password);
+                if (user != null) {
+                    basicResponse = new LoginResponse(true, errorCode, user.getId());
+                } else {
+                    errorCode = ERROR_LOGIN_WRONG_CREDS;
+                }
+            } else {
+                errorCode = ERROR_SIGN_UP_NO_PASSWORD;
+            }
+        } else {
+            errorCode = ERROR_SIGN_UP_NO_USERNAME;
+        }
+        if (errorCode != null) {
+            basicResponse = new BasicResponse(success, errorCode);
+        }
+        return basicResponse;
+    }
+
+    @RequestMapping(value = "/get-user-balance", method = {RequestMethod.GET, RequestMethod.POST})
+    public float getUserBalance(String username) {
+        System.out.println(username);
+        return persist.getUserBalance(username);
+    }
+
+    @RequestMapping(value = "/update-user-balance", method = RequestMethod.POST)
+    public BasicResponse updateUserBalance(String username, String password, float balance) {
+        persist.updateUserBalance(username, password, balance);
+        System.out.println("update balance " + balance);
+        return new BasicResponse(true, null); // Return success response
+    }
+
+    @RequestMapping(value = "/update-username", method = RequestMethod.POST)
+    public BasicResponse updateUsername(String username, String password, String newUsername) {
+        System.out.println("username " + username);
+        System.out.println("password " + password);
+        System.out.println("updated username " + newUsername);
+        persist.updateUsername(username, password, newUsername);
+        return new BasicResponse(true, null); // Return success response
+    }
+
+    @RequestMapping(value = "add-user")
+    public boolean addUser(String username, String password, String email) {
+        User userToAdd = new User(username, password, email, 1000);
+        return dbUtils.addUser(userToAdd);
+    }
+
+
+    @RequestMapping(value = "get-users")
+    public List<User> getUsers() {
+        return dbUtils.getAllUsers();
+    }
+
+
+}
+
+
+DbUtils:
+package com.ashcollege.utils;
+
+
+import com.ashcollege.entities.User;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+@Component
+public class DbUtils {
+
+    private Connection connection;
+
+    @PostConstruct
+    public void init () {
+        createDbConnection(Constants.DB_USERNAME, Constants.DB_PASSWORD);
+    }
+
+    private void createDbConnection(String username, String password){
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/ash2024", username, password);
+            System.out.println("Connection successful!");
+            System.out.println();
+        }catch (Exception e){
+            System.out.println("Cannot create DB connection!");
+        }
+    }
+
+    public boolean checkIfUsernameAvailable (String username) {
+        boolean available = true;
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT username FROM users WHERE username = ?");
+            preparedStatement.setString(1,username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                available = false;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return available;
+    }
+
+    public boolean addUser (User user) {
+        boolean success = false;
+        try {
+            if (checkIfUsernameAvailable(user.getUsername())) {
+                PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO users (username, password, email, balance) VALUES ( ? , ? , ? , ?)");
+                preparedStatement.setString(1, user.getUsername());
+                preparedStatement.setString(2, user.getPassword());
+                preparedStatement.setString(3, user.getEmail());
+                preparedStatement.setFloat(4,user.getBalance());
+                preparedStatement.executeUpdate();
+                success = true;
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+        }
+        return success;
+    }
+
+    public List<User> getAllUsers () {
+        List<User> allUsers = new ArrayList<>();
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users");
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String username = resultSet.getString("username");
+                String password = resultSet.getString("password");
+                String email = resultSet.getString("email");
+                float balance = resultSet.getFloat("balance");
+                User user = new User(id, username,password, email, balance);
+                allUsers.add(user);
+            }
+
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+        return allUsers;
+    }
+
+
+    /*public boolean checkCredentials (String username, String password) {
+        boolean ok = false;
+        if (checkIfUsernameAvailable(username)) {
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE password = ? and username = ?");
+            preparedStatement.setString(1,username);
+            preparedStatement.setString(2,password);
+        }
+    }*/
+
+    public User login (String username, String password) {
+        User user = null;
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT id, secret FROM users WHERE username = ? AND password = ? ");
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String secret = resultSet.getString("secret");
+                user = new User();
+                user.setId(id);
+                //user.setSecret(secret);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return user;
+
+    }
+
+
+    public User getUserBySecret (String secret) {
+        User user = null;
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT * " +
+                            "FROM users u " +
+                            "WHERE u.secret = ?"
+            );
+            preparedStatement.setString(1,secret);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                user = new User();
+                user.setId(id);
+            }
+        }catch (Exception e) {
+            System.out.println(e);
+        }
+        return user;
+    }
+
+    public float getUserBalance(String username) {
+        float balance = 0;
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT balance FROM users WHERE username = ?");
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                balance = resultSet.getFloat("balance");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return balance;
+    }
+
+    public void updateUserBalance(String username, String password, float balance) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "UPDATE users SET balance = ? WHERE username = ? AND password = ?");
+            preparedStatement.setFloat(1, balance);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateUsername(String username, String password, String newUsername) {
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "UPDATE users SET username = ? WHERE username = ? AND password = ?");
+            preparedStatement.setString(1, newUsername);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+}
+
+
+@PostConstruct
+    public void init (){
+        teams.clear();
+        Matches.clear();
+        currentRound.clear();
+        thisRoundNumber = 1;
+        currentMinute = 0;
+        createTeams();
+        fillCurrentRound();
+        new Thread(() -> {
+            while (thisRoundNumber <= 9) { // Run for 9 rounds
+                int iterations = 0;
+                while (iterations < 30) { // 30 iterations of 1 second each
+                    try {
+                        Thread.sleep(1000); // Sleep for 1 second
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    decideGoal(); // Simulate goals
+                    sendCurrentRoundToClients(); // Send the current round to clients
+                    sendMinuteCounter(currentMinute); // Send current minute
+                    currentMinute += 3;
+                    iterations++;
+                }
+
+                try {
+                    Thread.sleep(5000); // Sleep for 1 second
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                updateTeams(); // Update teams after each round
+                thisRoundNumber++; // Move to the next round
+                if (thisRoundNumber > 9) {
+                    sendSignal("Season ended"); // Send signal that the season has ended
+                } else {
+                    sendRoundNumber(thisRoundNumber); // Send current round number
+                }
+                fillCurrentRound();
+            }
+        }).start();
+
+    }
+
+
+        @RequestMapping(value = "/init-page-details", method = {RequestMethod.GET, RequestMethod.POST})
+        public String getInitialPageDetails() throws JsonProcessingException {
+            ObjectMapper mapper = new ObjectMapper();
+            String currentRoundJson = mapper.writeValueAsString(currentRound);
+            String currentTeamsJson = mapper.writeValueAsString(teams);
+            String json = "{\"currentRound\": " + currentRoundJson + ", \"teams\": " + currentTeamsJson + ", \"betEnable\": " + betEnable + "}";
+            return json;
+        }
