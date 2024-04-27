@@ -47,57 +47,10 @@ public class GeneralController {
         new Thread(() -> {
             while (true) {
                 // Start of a season
-                teams.clear();
-                matches.clear();
-                currentRoundMatches.clear();
-                currentRoundNumber = 1;
-                createTeams();
-                fillCurrentRound();
-                notifySeasonStart();
-                // Run rounds
-                while (currentRoundNumber <= 9) { // Run for 9 rounds
-                    betEnable = true;
-                    currentMinute = 3;
-                    sendCurrentRoundToClients();
-                    notifyRoundStart();
-                    try {
-                        Thread.sleep(30000); // Betting phase lasts for 30 seconds
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    notifyBettingEnd();
-                    betEnable = false;
-                    int iterations = 0;
-                    while (iterations < 30) { // 30 iterations of 1 second each
-                        try {
-                            Thread.sleep(1000); // Sleep for 1 second
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                        decideGoal(); // Simulate goals
-                        sendCurrentRoundToClients(); // Send the current round to clients
-                        iterations++;
-                        currentMinute += 3;
-                    }
-                    updateTeams(); // Update teams after each round
-                    sendCurrentRoundToClients();
-                    notifyRoundEnd();
-                    currentMinute = 3;
-                    try {
-                        Thread.sleep(5000); // Pause for 5 seconds before starting the next round
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    currentRoundNumber++; // Move to the next round
-                    fillCurrentRound();
-                }
-                // End of a season
-                notifySeasonEnd();
-                try {
-                    Thread.sleep(60000); // Sleep for 1 minute between seasons
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                initializeSeason();
+                runSeason();
+                endSeason();
+                pauseBetweenSeasons();
             }
         }).start();
     }
@@ -454,6 +407,91 @@ public class GeneralController {
             } catch (IOException e) {
                 // Handle IO exception
             }
+        }
+    }
+
+    private void initializeSeason() {
+        teams.clear();
+        matches.clear();
+        currentRoundMatches.clear();
+        currentRoundNumber = 1;
+        createTeams();
+        fillCurrentRound();
+        notifySeasonStart();
+    }
+
+    private void runSeason() {
+        while (currentRoundNumber <= 9) { // Run for 9 rounds
+            startRound();
+            runBettingPhase();
+            runGameIterations();
+            endRound();
+            pauseBeforeNextRound();
+            moveToNextRound();
+        }
+    }
+
+    private void startRound() {
+        betEnable = true;
+        currentMinute = 3;
+        sendCurrentRoundToClients();
+        notifyRoundStart();
+    }
+
+    private void runBettingPhase() {
+        try {
+            Thread.sleep(30000); // Betting phase lasts for 30 seconds
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        notifyBettingEnd();
+        betEnable = false;
+    }
+
+    private void runGameIterations() {
+        int iterations = 0;
+        while (iterations < 30) { // 30 iterations of 1 second each
+            try {
+                Thread.sleep(1000); // Sleep for 1 second
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            decideGoal(); // Simulate goals
+            sendCurrentRoundToClients(); // Send the current round to clients
+            iterations++;
+            currentMinute += 3;
+        }
+    }
+
+    private void endRound() {
+        updateTeams(); // Update teams after each round
+        sendCurrentRoundToClients();
+        notifyRoundEnd();
+        currentMinute = 3;
+    }
+
+    private void pauseBeforeNextRound() {
+        try {
+            Thread.sleep(5000); // Pause for 5 seconds before starting the next round
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void moveToNextRound() {
+        currentRoundNumber++; // Move to the next round
+        fillCurrentRound();
+    }
+
+    private void endSeason() {
+        notifySeasonEnd();
+    }
+
+    private void pauseBetweenSeasons() {
+        try {
+            Thread.sleep(60000); // Sleep for 1 minute between seasons
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 

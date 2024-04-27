@@ -16,6 +16,8 @@ public class Match {
     private double drawOdd;
     private int result;
     private float weatherFactor;
+
+
     public Match(int round, int match, String homeTeam, int homeId, int awayId, String awayTeam, float homeSkill, float awaySkill) {
         this.round = round;
         this.match = match;

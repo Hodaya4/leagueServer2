@@ -1,5 +1,4 @@
 package com.ashcollege;
-
 import com.ashcollege.entities.Team;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
