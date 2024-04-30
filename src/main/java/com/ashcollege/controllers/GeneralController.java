@@ -35,6 +35,9 @@ public class GeneralController {
     private int currentRoundNumber = 1;
     private int currentMinute;
     private boolean betEnable = false;
+    private List<List<BetForm>> submittedForms = new ArrayList<>();
+    List<Map<String, Object>> checkedForms = new ArrayList<>();
+
 
     @Autowired
     private DbUtils dbUtils;
@@ -57,8 +60,7 @@ public class GeneralController {
 
     @RequestMapping(value = "/init-page-details", method = {RequestMethod.GET, RequestMethod.POST})
     public InitialPageDetails getInitialPageDetails() {
-
-        return new InitialPageDetails(currentRoundMatches, teams, betEnable);
+        return new InitialPageDetails(currentRoundMatches, teams, betEnable, submittedForms, currentRoundNumber);
     }
 
     @RequestMapping(value = "/start-streaming", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -72,6 +74,11 @@ public class GeneralController {
     public List<Team> updateTable() {
         updateLeagueTable();
         return teams;
+    }
+
+    @RequestMapping(value = "/checked-forms", method = {RequestMethod.GET, RequestMethod.POST})
+    public List<Map<String, Object>> checked() {
+        return checkedForms;
     }
 
     @RequestMapping(value = "/login", method = {RequestMethod.GET, RequestMethod.POST})
@@ -140,44 +147,66 @@ public class GeneralController {
         return dbUtils.getAllUsers();
     }
 
-    @RequestMapping(value = "/check-winning-bets", method = {RequestMethod.GET, RequestMethod.POST})
-    public List<List<Map<String, Object>>> checkWinningBets(@RequestBody Map<String, Object> payload) {
-        List<List<Map<String, Object>>> forms = (List<List<Map<String, Object>>>) payload.get("forms");
-        List<List<Map<String, Object>>> validatedForms = new ArrayList<>();
-        for (List<Map<String, Object>> form : forms) {
-            boolean allCorrect = true; // flag to track if all bets in this form are correct
 
-            for (Map<String, Object> bet : form) {
-                int roundNumber = (int) bet.get("roundNumber");
-                int matchNumber = (int) bet.get("matchNumber");
-                int betValue = (int) bet.get("bet");
+    @RequestMapping(value = "/check-winning-bets", method = {RequestMethod.GET, RequestMethod.POST})
+    public List<Map<String, Object>> checkWinningBets(@RequestBody Map<String, Object> requestData) {
+        String username = (String) requestData.get("username");
+        float balance = persist.getUserBalance(username);
+        for (int formNumber = 0; formNumber < submittedForms.size(); formNumber++) {
+            List<Map<String, Object>> form = new ArrayList<>();
+            List<BetForm> submittedForm = submittedForms.get(formNumber);
+            int numBets = submittedForm.size();
+            int betAmount = 0;
+            double oddMultiplier = 1.0;
+            boolean formWin = true;
+
+            // Iterate through bets in the form
+            for (BetForm bet : submittedForm) {
+                int roundNumber = bet.getRoundNumber();
+                int matchNumber = bet.getMatchNumber();
+                int betValue = bet.getBet();
+                double odd = bet.getOdd();
+                betAmount = bet.getBetAmount();
+                oddMultiplier *= odd; // Calculate the odd multiplier for the form
 
                 Match correspondingMatch = matches.stream()
                         .filter(m -> m.getRound() == roundNumber && m.getMatch() == matchNumber)
                         .findFirst()
                         .orElse(null);
 
+                // Check if the bet is correct
                 boolean isCorrect = correspondingMatch != null && correspondingMatch.getResult() == betValue;
 
                 // Add a boolean indicating whether the bet is correct or not to the bet map
-                bet.put("isCorrect", isCorrect);
+                Map<String, Object> betInfo = new HashMap<>();
+                betInfo.put("roundNumber", roundNumber);
+                betInfo.put("matchNumber", matchNumber);
+                betInfo.put("bet", betValue);
+                betInfo.put("odd", odd);
+                betInfo.put("isCorrect", isCorrect);
+                form.add(betInfo);
 
                 if (!isCorrect) {
-                    allCorrect = false;
+                    formWin = false;
                 }
+
+            }
+            if(formWin){
+                balance = balance + (float)(betAmount * oddMultiplier);
+                boolean success = persist.updateUserBalance(username, balance);
             }
 
-            // Optionally, if you want to add a boolean indicating whether the entire form is a win or not
-            boolean isFormWin = allCorrect;
-            // Add a boolean indicating whether the form is a win or not to each form
-            if (form.size() > 0) {
-                form.get(0).put("isFormWin", isFormWin);
-            }
-
-            // Add the modified form to the list of validated forms
-            validatedForms.add(form);
+            // Add form information to the checkedForms list
+            Map<String, Object> formInfo = new HashMap<>();
+            formInfo.put("formNumber", formNumber + 1); // Form numbers start with 1
+            formInfo.put("numBets", numBets);
+            formInfo.put("betAmount", betAmount);
+            formInfo.put("oddMultiplier", oddMultiplier);
+            formInfo.put("potentialWinningAmount", betAmount * oddMultiplier);
+            formInfo.put("formWin", formWin);
+            checkedForms.add(formInfo);
         }
-        return validatedForms;
+        return checkedForms;
     }
 
     @RequestMapping(value = "/update-league-table", method = {RequestMethod.GET, RequestMethod.POST})
@@ -197,6 +226,33 @@ public class GeneralController {
             // If goal difference is equal, sort alphabetically by team name
             return a.getName().compareTo(b.getName());
         });
+    }
+
+    @RequestMapping(value = "/save-bets", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<BasicResponse> saveBets(@RequestBody Map<String, Object> payload) {
+        List<Map<String, Object>> bets = (List<Map<String, Object>>) payload.get("bets");
+        System.out.println(bets);
+        List<BetForm> form = new ArrayList<>();
+        for (Map<String, Object> bet : bets) {
+            int roundNumber = (int) bet.get("roundNumber");
+            int matchNumber = (int) bet.get("matchNumber");
+            int betValue = (int) bet.get("bet");
+            String oddStr = bet.get("odd").toString(); // Convert odd value to a string
+            double odd = Double.parseDouble(oddStr);
+            int betAmount = (int) bet.get("betAmount");
+            String dec = (String) bet.get("dec");
+            BetForm betForm = new BetForm(roundNumber, matchNumber, betAmount, odd, betValue, dec);
+            form.add(betForm);
+        }
+        try {
+            submittedForms.add(form);
+            System.out.println(submittedForms);
+            // Return a success response
+            return ResponseEntity.ok(new BasicResponse(true, 200));
+        } catch (Exception e) {
+            // Return an error response if saving fails
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new BasicResponse(false, 0));
+        }
     }
 
 
@@ -253,8 +309,8 @@ public class GeneralController {
                 assert homeTeam != null;
                 assert awayTeam != null;
 
-                float updateHomeSkills = match.getHomeSkills() - (homeTeam.getNumInjuredPlayers() + homeTeam.getNumRedCards() + homeTeam.getIsWinLastMatch());
-                float updateAwaySkills = match.getAwaySkills() - (awayTeam.getNumInjuredPlayers() + awayTeam.getNumRedCards() + awayTeam.getIsWinLastMatch());
+                float updateHomeSkills = match.getHomeSkills() + homeTeam.getIsWinLastMatch() - (homeTeam.getNumInjuredPlayers() + homeTeam.getNumRedCards());
+                float updateAwaySkills = match.getAwaySkills() + awayTeam.getIsWinLastMatch() - (awayTeam.getNumInjuredPlayers() + awayTeam.getNumRedCards());
                 float homeTeamChance = updateHomeSkills / (updateHomeSkills + updateAwaySkills);
                 float awayTeamChance = 1f - homeTeamChance;
                 float rand = (float) Math.random();
@@ -411,6 +467,7 @@ public class GeneralController {
     }
 
     private void initializeSeason() {
+        checkedForms.clear();
         teams.clear();
         matches.clear();
         currentRoundMatches.clear();
@@ -432,6 +489,7 @@ public class GeneralController {
     }
 
     private void startRound() {
+        submittedForms.clear();
         betEnable = true;
         currentMinute = 3;
         sendCurrentRoundToClients();
