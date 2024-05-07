@@ -1,7 +1,4 @@
-package com.ashcollege.entities;
-
-import java.util.ArrayList;
-import java.util.List;
+package server.entities;
 
 public class User {
     private int id;

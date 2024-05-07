@@ -1,5 +1,5 @@
-package com.ashcollege;
-import com.ashcollege.entities.User;
+package server;
+import server.entities.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,31 +7,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 @Transactional
 @Component
@@ -94,40 +78,5 @@ public class Persist {
                 .uniqueResult();
     }
 
-    public float getUserBalance(String username) {
-        float balance = 0;
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT balance FROM users WHERE username = ?");
-            preparedStatement.setString(1, username);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                balance = resultSet.getFloat("balance");
-            } else {
-                // If the user is not found, set balance to -1
-                balance = -1;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Set balance to -1 in case of an exception
-            balance = -1;
-        }
-        return balance;
-    }
-
-
-    public boolean updateUserBalance(String username, float amount) {
-        try (Connection connection = dataSource.getConnection()) {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "UPDATE users SET balance = ? WHERE username = ?");
-            preparedStatement.setFloat(1, amount);
-            preparedStatement.setString(2, username);
-            int rowsAffected = preparedStatement.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 
 }

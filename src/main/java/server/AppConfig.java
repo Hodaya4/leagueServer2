@@ -1,4 +1,4 @@
-package com.ashcollege;
+package server;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.springframework.context.annotation.Bean;
@@ -9,11 +9,10 @@ import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import server.utils.Constants;
+
 import javax.sql.DataSource;
 import java.util.Properties;
-
-import static com.ashcollege.utils.Constants.DB_PASSWORD;
-import static com.ashcollege.utils.Constants.DB_USERNAME;
 
 
 @Configuration
@@ -26,8 +25,8 @@ public class AppConfig {
         ComboPooledDataSource dataSource = new ComboPooledDataSource();
         dataSource.setDriverClass("com.mysql.jdbc.Driver");
         dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/ash2024?useSSL=false&allowPublicKeyRetrieval=true");
-        dataSource.setUser(DB_USERNAME);
-        dataSource.setPassword(DB_PASSWORD);
+        dataSource.setUser(Constants.DB_USERNAME);
+        dataSource.setPassword(Constants.DB_PASSWORD);
         dataSource.setMaxPoolSize(20);
         dataSource.setMinPoolSize(5);
         dataSource.setIdleConnectionTestPeriod(3600);

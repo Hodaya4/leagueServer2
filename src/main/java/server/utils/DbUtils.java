@@ -1,7 +1,7 @@
-package com.ashcollege.utils;
+package server.utils;
 
 
-import com.ashcollege.entities.User;
+import server.entities.User;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -116,56 +116,6 @@ public class DbUtils {
 
     }
 
-
-    public User getUserBySecret (String secret) {
-        User user = null;
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * " +
-                            "FROM users u " +
-                            "WHERE u.secret = ?"
-            );
-            preparedStatement.setString(1,secret);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                user = new User();
-                user.setId(id);
-            }
-        }catch (Exception e) {
-            System.out.println(e);
-        }
-        return user;
-    }
-
-    public float getUserBalance(String username) {
-        float balance = 0;
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT balance FROM users WHERE username = ?");
-            preparedStatement.setString(1, username);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                balance = resultSet.getFloat("balance");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return balance;
-    }
-
-    public void updateUserBalance(String username, String password, float balance) {
-        try {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "UPDATE users SET balance = ? WHERE username = ? AND password = ?");
-            preparedStatement.setFloat(1, balance);
-            preparedStatement.setString(2, username);
-            preparedStatement.setString(3, password);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void updateUsername(String username, String password, String newUsername) {
         try {

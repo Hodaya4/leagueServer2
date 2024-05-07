@@ -5,16 +5,16 @@
 
 
     <!--example-->
-    <class name="com.ashcollege.entities.Client" table="clients" lazy="false">
-        <id name="id" type="int" column="id">
-            <generator class="native"/>
-        </id>
-        <property name="firstName" type="string" column="first_name"/>
-        <property name="lastName" type="string" column="last_name"/>
-    </class>
+<!--    <class name="server.entities.Client" table="clients" lazy="false">-->
+<!--        <id name="id" type="int" column="id">-->
+<!--            <generator class="native"/>-->
+<!--        </id>-->
+<!--        <property name="firstName" type="string" column="first_name"/>-->
+<!--        <property name="lastName" type="string" column="last_name"/>-->
+<!--    </class>-->
 
 
-    <class name="com.ashcollege.entities.User" table="users" lazy="false">
+    <class name="server.entities.User" table="users" lazy="false">
         <id name="id" type="int" column="id">
             <generator class="native"/>
         </id>

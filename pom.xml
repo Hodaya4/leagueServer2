@@ -3,8 +3,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ashcollege</groupId>
-    <artifactId>ashcollege</artifactId>
+    <groupId>server</groupId>
+    <artifactId>server</artifactId>
     <version>1.0</version>
     <packaging>jar</packaging>
 
@@ -146,7 +146,7 @@
     </dependencies>
 
     <build>
-        <finalName>ashcollege</finalName>
+        <finalName>server</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
